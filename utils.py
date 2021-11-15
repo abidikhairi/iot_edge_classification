@@ -7,5 +7,8 @@ def load_graph():
     graph = data[0]
     
     graph.ndata['feat'] = torch.ones(graph.num_nodes(), 1)
+
+    ndata = ['feat']
+    edata = ['feat', 'train_mask', 'test_mask', 'label']
     
-    return graph
+    return dgl.to_homogeneous(graph, ndata=ndata, edata=edata)
