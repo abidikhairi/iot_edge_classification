@@ -9,7 +9,7 @@ class EdgePredictor(nn.Module):
         
         self.predictor = nn.Sequential(
             nn.Linear(in_features= edge_feature_size + (2 * node_feature_size), out_features=hidden_size),
-            nn.Dropout(),
+            nn.BatchNorm1d(num_features=hidden_size),
             nn.Linear(in_features=hidden_size, out_features=num_classes),
             nn.LogSoftmax(dim=1)
         )
@@ -32,13 +32,13 @@ class GCN(nn.Module):
         super(GCN, self).__init__()
         
         self.feature = nn.Sequential(
-            GraphConv(in_feats=node_feature_size, out_feats=64, activation=nn.ReLU(), allow_zero_in_degree=True),
+            GraphConv(in_feats=node_feature_size, out_feats=16, activation=nn.ReLU(), allow_zero_in_degree=True),
             nn.Dropout(),
-            nn.BatchNorm1d(num_features=64),
-            GraphConv(in_feats=64, out_feats=128, activation=nn.ReLU(), allow_zero_in_degree=True),
+            nn.BatchNorm1d(num_features=16),
+            GraphConv(in_feats=16, out_feats=64, allow_zero_in_degree=True),
         )
 
-        self.classifier = EdgePredictor(edge_feature_size=edge_feature_size, node_feature_size=128, hidden_size=16, num_classes=num_classes)
+        self.classifier = EdgePredictor(edge_feature_size=edge_feature_size, node_feature_size=64, hidden_size=16, num_classes=num_classes)
 
     def forward(self, blocks, n_feats):
         x = n_feats
@@ -67,10 +67,10 @@ class GAT(nn.Module):
         self.feature = nn.Sequential(
             GATConv(in_feats=node_feature_size, out_feats=16, num_heads=8, activation=nn.ReLU(), allow_zero_in_degree=True),
             nn.Dropout(),
-            GATConv(in_feats=16*8, out_feats=16, num_heads=1, activation=nn.ReLU(), allow_zero_in_degree=True),
+            GATConv(in_feats=16*8, out_feats=32, num_heads=1, activation=nn.ReLU(), allow_zero_in_degree=True),
         )
 
-        self.classifier = EdgePredictor(edge_feature_size=edge_feature_size, node_feature_size=16, hidden_size=16, num_classes=num_classes)
+        self.classifier = EdgePredictor(edge_feature_size=edge_feature_size, node_feature_size=32, hidden_size=8, num_classes=num_classes)
     
     def forward(self, blocks, n_feats):
         x = n_feats

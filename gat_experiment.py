@@ -49,7 +49,7 @@ def evaluate(model, criterion, graph, test_idx):
         }
 
 def main(args):
-    experiment = wandb.init(project='edge-classifcation', entity='flursky', name='GAT IOT Edge Classification')
+    experiment = wandb.init(project='edge-classifcation', entity='u-jendouba-ai', name='GAT IOT Edge Classification')
 
     epochs = args.epochs
     learning_rate = args.learning_rate
