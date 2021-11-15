@@ -1,6 +1,5 @@
 # Data directories
 temp/
-data/
 wandb
 
 # Docker
