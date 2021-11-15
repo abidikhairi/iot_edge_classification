@@ -1,7 +1,7 @@
 import dgl
 import torch
 from torch import nn
-from dgl.nn.pytorch import GraphConv, GATConv
+from dgl.nn.pytorch import GraphConv, GATConv, SAGEConv
 
 class EdgePredictor(nn.Module):
     def __init__(self, edge_feature_size, node_feature_size, hidden_size, num_classes):
@@ -9,8 +9,10 @@ class EdgePredictor(nn.Module):
         
         self.predictor = nn.Sequential(
             nn.Linear(in_features= edge_feature_size + (2 * node_feature_size), out_features=hidden_size),
+            nn.ReLU(),
             nn.BatchNorm1d(num_features=hidden_size),
             nn.Linear(in_features=hidden_size, out_features=num_classes),
+            nn.ReLU(),
             nn.LogSoftmax(dim=1)
         )
 
@@ -92,3 +94,36 @@ class GAT(nn.Module):
             return self.classifier(blocks, x)
         else:
             return self.classifier(blocks[-1], x)
+
+class SAGE(nn.Module):
+    def __init__(self, node_feature_size, edge_feature_size, num_classes):
+        super(SAGE, self).__init__()
+        
+        self.feature = nn.Sequential(
+            SAGEConv(in_feats=node_feature_size, out_feats=64, activation=nn.ELU(), aggregator_type='pool'),
+            nn.Dropout(),
+            nn.BatchNorm1d(num_features=64),
+            SAGEConv(in_feats=64, out_feats=16, aggregator_type='pool')
+        )
+
+        self.classifier = EdgePredictor(edge_feature_size=edge_feature_size, node_feature_size=16, hidden_size=8, num_classes=num_classes)
+    
+    def forward(self, blocks, n_feats):
+        x = n_feats
+        index = 0
+
+        for layer in self.feature:
+            if isinstance(layer, SAGEConv):
+                if isinstance(blocks, dgl.DGLGraph):
+                    x = layer(blocks, x)
+                else:
+                    x = layer(blocks[index], x)
+                    index += 1
+            else:
+                x = layer(x)
+
+        if isinstance(blocks, dgl.DGLGraph):
+            return self.classifier(blocks, x)
+        else:
+            return self.classifier(blocks[-1], x)
+
