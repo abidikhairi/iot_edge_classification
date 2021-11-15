@@ -1,12 +1,9 @@
-import dgl
 import torch
+from utils import load_graph
 
 if __name__ == '__main__':
-
-    data, _ = dgl.load_graphs('./data/graph.bin')
-    graph = data[0]
     
-    graph.ndata['feat'] = torch.ones(graph.num_nodes(), 1)
+    graph = load_graph()
 
     print('Number of Nodes:', graph.num_nodes())
     print('Number of Edges:', graph.num_edges())
