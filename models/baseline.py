@@ -7,17 +7,25 @@ class EdgePredictor(nn.Module):
     def __init__(self, edge_feature_size, node_feature_size, hidden_size, num_classes):
         super(EdgePredictor, self).__init__()
         
+        self.edge_feature = nn.Sequential(
+            nn.Linear(in_features=edge_feature_size, out_features=hidden_size),
+            nn.ReLU()
+        )
+
         self.predictor = nn.Sequential(
-            nn.Linear(in_features= edge_feature_size + (2 * node_feature_size), out_features=hidden_size),
+            nn.Linear(in_features= hidden_size + (2 * node_feature_size), out_features=2* hidden_size),
             nn.ReLU(),
-            nn.BatchNorm1d(num_features=hidden_size),
-            nn.Linear(in_features=hidden_size, out_features=num_classes),
+            nn.BatchNorm1d(num_features=2 * hidden_size),
+            nn.Linear(in_features=2 * hidden_size, out_features=num_classes),
             nn.ReLU(),
             nn.LogSoftmax(dim=1)
         )
 
     def apply_edges(self, edges):
-        h = torch.cat([edges.data['feat'], edges.src['hn'], edges.dst['hn']], dim=1)
+        
+        eh = self.edge_feature(edges.data['feat']) 
+
+        h = torch.cat([eh, edges.src['hn'], edges.dst['hn']], dim=1)
 
         return { 'scores': self.predictor(h) }
 
